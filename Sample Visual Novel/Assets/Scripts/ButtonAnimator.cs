@@ -8,8 +8,9 @@ using UnityEngine.UI;
 public class ButtonAnimator : MonoBehaviour
 {
     const float LERPING_THRESHOLD = 1f; // Once height is within this distance from destination, snaps to destination height
-    const float GROWING_SMOOTHNESS = 12.5f; // Larger is slower
+    const float GROWING_SMOOTHNESS = 7.5f; // Larger is slower
     const float SHRINKING_SMOOTHNESS = 20f; // Larger is slower
+    const float FADE_TIME = 0.2f;
 
     public GameObject[] buttons;
 
@@ -67,29 +68,31 @@ public class ButtonAnimator : MonoBehaviour
         {
             buttons[buttonIndex].SetActive(true);
             buttons[buttonIndex].GetComponent<Button>().interactable = false;
-            buttonBoxes[buttonIndex].CrossFadeAlpha(1, 0.2f, false);
-            buttonTexts[buttonIndex].CrossFadeAlpha(1, 0.2f, false);
+            buttonBoxes[buttonIndex].CrossFadeAlpha(1, FADE_TIME, false);
+            buttonTexts[buttonIndex].CrossFadeAlpha(1, FADE_TIME, false);
             while (buttonRect.rect.height < startHeight - LERPING_THRESHOLD)
             {
                 RectTransformAssistant.SetHeight(
                     buttonRect,
-                    Mathf.Lerp(RectTransformAssistant.GetHeight(buttonRect), startHeight,  1 / GROWING_SMOOTHNESS));
-                yield return null;
+                    Mathf.Lerp(RectTransformAssistant.GetHeight(buttonRect), startHeight, 1 / GROWING_SMOOTHNESS));
+                yield return new WaitForFixedUpdate();
             }
+            RectTransformAssistant.SetHeight(buttonRect, startHeight);
             buttons[buttonIndex].GetComponent<Button>().interactable = true;
             buttonRect.rect.Set(buttonRect.rect.x, buttonRect.rect.y, buttonRect.rect.width, startHeight);
         }
         else
         {
             buttons[buttonIndex].GetComponent<Button>().interactable = false;
-            buttonBoxes[buttonIndex].CrossFadeAlpha(0, 0.2f, false);
-            buttonTexts[buttonIndex].CrossFadeAlpha(0, 0.2f, false);
-            while (buttonRect.rect.height > LERPING_THRESHOLD)
+            buttonBoxes[buttonIndex].CrossFadeAlpha(0, FADE_TIME, false);
+            buttonTexts[buttonIndex].CrossFadeAlpha(0, FADE_TIME, false);
+            float timeToStopShrink = Time.time + FADE_TIME;
+            while (timeToStopShrink > Time.time)
             {
                 RectTransformAssistant.SetHeight(
                     buttonRect,
                     Mathf.Lerp(RectTransformAssistant.GetHeight(buttonRect), 0, 1 / SHRINKING_SMOOTHNESS));
-                yield return null;
+                yield return new WaitForFixedUpdate();
             }
             buttonRect.rect.Set(buttonRect.rect.x, buttonRect.rect.y, buttonRect.rect.width, 0);
             buttons[buttonIndex].SetActive(false);
